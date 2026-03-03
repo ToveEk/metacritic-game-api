@@ -1,0 +1,28 @@
+{
+  "name": "assignment-api-design",
+  "version": "1.0.0",
+  "description": "*Replace with the name of your API project.*",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.lnu.se:1dv027/student/te222uu/assignment-api-design.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.4.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "graphql": "^16.13.0",
+    "graphql-tag": "^2.12.6",
+    "mysql2": "^3.18.2"
+  }
+}
