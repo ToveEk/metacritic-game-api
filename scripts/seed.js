@@ -144,19 +144,27 @@ async function seedRelations(relations) {
  */
 async function buildRelations(rows, gameMap, genreMap, platformMap) {
     const relations = [];
+    const seen = new Set();
+
     for (const row of rows) {
         const gameId = gameMap[row.title];
         if (!gameId) continue;
 
         for (const genre of extractGenres(row)) {
             const genreId = genreMap[genre];
-            if (genreId) {
+            const key = `genre-${gameId}-${genreId}`;
+
+            if (genreId && !seen.has(`genre-${gameId}-${genreId}`)) {
+                seen.add(key);
                 relations.push({ type: 'genre', gameId, genreId });
             }
         }
         for (const platform of extractPlatforms(row)) {
             const platformId = platformMap[platform];
-            if (platformId) {
+            const key = `platform-${gameId}-${platformId}`;
+
+            if (platformId && !seen.has(key)) {
+                seen.add(key);
                 relations.push({ type: 'platform', gameId, platformId });
             }
         }
