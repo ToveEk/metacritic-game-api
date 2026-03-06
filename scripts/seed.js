@@ -1,6 +1,6 @@
 import fs from 'fs';
 import csv from 'csv-parser';
-import { db } from '../src/db.js';
+import { db } from '../src/config/db.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -29,9 +29,11 @@ async function parseCSV(filePath) {
 function transformGame(row) {
     return {
         title: row.title,
-        releaseDate: row.release_date || null,
+        releaseDate: row.releaseDate || null,
         metascore: row.metascore ? parseInt(row.metascore) : null,
-        userscore: row.userscore ? parseFloat(row.userscore) : null,
+        userscore: row.userscore && row.userscore !== 'tbd'
+            ? parseFloat(row.userscore)
+            : null,
         description: row.description || null,
         developer: row.developer || null,
         publisher: row.publisher || null
@@ -125,7 +127,19 @@ async function seedRelations(relations) {
  * Main function to orchestrate the seeding process. It reads the CSV file, transforms the data, and seeds the database with genres, platforms, games, and their relations.
  */
 async function seed() {
+    await db.query('DELETE FROM game_platforms')
+    await db.query('DELETE FROM game_genres')
+    await db.query('DELETE FROM games')
+    await db.query('DELETE FROM genres')
+    await db.query('DELETE FROM platforms')
+
+    if (!process.env.METACRITIC_CSV_PATH) {
+        throw new Error('METACRITIC_CSV_PATH environment variable is not set');
+    }
+
     const rows = await parseCSV(process.env.METACRITIC_CSV_PATH);
+
+
 
     const gamesArray = [];
     const genresSet = new Set();
@@ -142,17 +156,19 @@ async function seed() {
         rowPlatforms.forEach(platform => platformsSet.add(platform));
     }
 
-    await seedGenres(Array.from(genresSet));
-    await seedPlatforms(Array.from(platformsSet));
+    await seedGenres([...genresSet]);
+    await seedPlatforms([...platformsSet]);
     await seedGames(gamesArray);
 }
 
 seed()
-    .then(() => {
+    .then(async () => {
         console.log('Database seeding completed successfully.');
+        await db.end()
         process.exit(0);
     })
-    .catch((error) => {
+    .catch(async (error) => {
         console.error('Error seeding database:', error);
+        await db.end()
         process.exit(1);
     });
