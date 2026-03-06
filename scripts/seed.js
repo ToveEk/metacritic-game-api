@@ -120,26 +120,72 @@ async function seedGames(games) {
  * @param {Array<Object>} relations - The array of relation objects to insert.
  */
 async function seedRelations(relations) {
-    // implement logic to insert into game_genres and game_platforms tables
+    for (const relation of relations) {
+        if (relation.type === 'genre') {
+            await db.query(
+                'INSERT INTO game_genres (game_id, genre_id) VALUES (?, ?)',
+                [relation.gameId, relation.genreId]
+            )
+        } else if (relation.type === 'platform') {
+            await db.query(
+                'INSERT INTO game_platforms (game_id, platform_id) VALUES (?, ?)',
+                [relation.gameId, relation.platformId]
+            )
+        }
+    }
 }
 
 /**
- * Main function to orchestrate the seeding process. It reads the CSV file, transforms the data, and seeds the database with genres, platforms, games, and their relations.
+ * Builds relations between games, genres, and platforms.
+ * @param {Array<Object>} rows - The array of CSV rows.
+ * @param {Object} gameMap - The map of game titles to IDs.
+ * @param {Object} genreMap - The map of genre names to IDs.
+ * @param {Object} platformMap - The map of platform names to IDs.
+ */
+async function buildRelations(rows, gameMap, genreMap, platformMap) {
+    const relations = [];
+    for (const row of rows) {
+        const gameId = gameMap[row.title];
+        if (!gameId) continue;
+
+        for (const genre of extractGenres(row)) {
+            const genreId = genreMap[genre];
+            if (genreId) {
+                relations.push({ type: 'genre', gameId, genreId });
+            }
+        }
+        for (const platform of extractPlatforms(row)) {
+            const platformId = platformMap[platform];
+            if (platformId) {
+                relations.push({ type: 'platform', gameId, platformId });
+            }
+        }
+    }
+
+    await seedRelations(relations);
+}
+
+/**
+ * Clears all data from the database tables to ensure a clean slate for seeding.
+ */
+async function clearDatabase() {
+    await db.query('DELETE FROM game_platforms');
+    await db.query('DELETE FROM game_genres');
+    await db.query('DELETE FROM games');
+    await db.query('DELETE FROM genres');
+    await db.query('DELETE FROM platforms');
+}
+
+/**
+ * Main function to orchestrate the seeding process.
  */
 async function seed() {
-    await db.query('DELETE FROM game_platforms')
-    await db.query('DELETE FROM game_genres')
-    await db.query('DELETE FROM games')
-    await db.query('DELETE FROM genres')
-    await db.query('DELETE FROM platforms')
+    await clearDatabase();
 
     if (!process.env.METACRITIC_CSV_PATH) {
         throw new Error('METACRITIC_CSV_PATH environment variable is not set');
     }
-
     const rows = await parseCSV(process.env.METACRITIC_CSV_PATH);
-
-
 
     const gamesArray = [];
     const genresSet = new Set();
@@ -149,17 +195,25 @@ async function seed() {
         const game = transformGame(row);
         gamesArray.push(game);
 
-        const rowGenres = extractGenres(row);
-        const rowPlatforms = extractPlatforms(row);
-
-        rowGenres.forEach(genre => genresSet.add(genre));
-        rowPlatforms.forEach(platform => platformsSet.add(platform));
+        extractGenres(row).forEach(genre => genresSet.add(genre));
+        extractPlatforms(row).forEach(platform => platformsSet.add(platform));
     }
 
     await seedGenres([...genresSet]);
     await seedPlatforms([...platformsSet]);
     await seedGames(gamesArray);
+
+    const [gameRows] = await db.query('SELECT id, title FROM games');
+    const [genreRows] = await db.query('SELECT id, name FROM genres');
+    const [platformRows] = await db.query('SELECT id, name FROM platforms');
+
+    const gameMap = Object.fromEntries(gameRows.map(game => [game.title, game.id]));
+    const genreMap = Object.fromEntries(genreRows.map(genre => [genre.name, genre.id]));
+    const platformMap = Object.fromEntries(platformRows.map(platform => [platform.name, platform.id]));
+
+    await buildRelations(rows, gameMap, genreMap, platformMap);
 }
+
 
 seed()
     .then(async () => {
