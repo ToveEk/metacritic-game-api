@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 
-import { typeDefs, resolvers } from "./models/schema.js";
+import { typeDefs } from "./typeDefs/typeDefs.js";
+import { resolvers } from "./resolvers/resolvers.js";
 
 dotenv.config();
 

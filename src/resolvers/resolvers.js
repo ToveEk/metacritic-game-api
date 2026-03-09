@@ -1,0 +1,14 @@
+import { gameResolvers } from "./gameResolvers.js"
+import { genreResolvers } from "./genreResolvers.js"
+import { platformResolvers } from "./platformResolvers.js"
+
+export const resolvers = {
+    Query: {
+        ...gameResolvers.Query,
+        ...genreResolvers.Query,
+        ...platformResolvers.Query
+    },
+    Game: {
+        ...gameResolvers.Game
+    }
+}
