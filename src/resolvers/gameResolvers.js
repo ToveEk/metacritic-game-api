@@ -2,9 +2,27 @@ import { db } from "../config/db.js"
 
 export const gameResolvers = {
     Query: {
-        games: async () => {
+        games: async (parent, args) => {
             try {
-                const [rows] = await db.query('SELECT * FROM games');
+                let query = 'SELECT * FROM games WHERE 1=1';
+                const params = [];
+
+                if (args.title) {
+                    query += ' AND title LIKE ?';
+                    params.push(`%${args.title}%`);
+                }
+
+                if (args.limit) {
+                    query += ' LIMIT ?';
+                    params.push(args.limit);
+                }
+
+                if (args.offset) {
+                    query += ' OFFSET ?';
+                    params.push(args.offset);
+                }
+
+                const [rows] = await db.query(query, params);
                 return rows.map(game => ({
                     ...game,
                     release_date: game.release_date ? game.release_date.toISOString().split('T')[0] : null
@@ -12,6 +30,19 @@ export const gameResolvers = {
             } catch (error) {
                 console.error('Error fetching game data:', error);
                 throw new Error('Failed to fetch game data');
+            }
+        },
+
+        game: async (parent, args) => {
+            try {
+                const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+                if (rows.length === 0) {
+                    return null;
+                }
+                return rows[0];
+            } catch (error) {
+                console.error('Error fetching game by ID:', error);
+                throw new Error('Failed to fetch game by ID');
             }
         }
     },

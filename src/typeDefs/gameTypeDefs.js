@@ -2,7 +2,7 @@ import { gql } from "graphql-tag"
 
 export const gameTypeDefs = gql`
     type Query {
-        games: [Game]
+        games(title: String, limit: Int, offset: Int): [Game]
         game(id: Int!): Game
     }
 
