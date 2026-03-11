@@ -8,6 +8,11 @@ export const resolvers = {
         ...genreResolvers.Query,
         ...platformResolvers.Query
     },
+
+    Mutation: {
+        ...gameResolvers.Mutation
+    },
+
     Game: {
         ...gameResolvers.Game
     }

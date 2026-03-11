@@ -47,6 +47,96 @@ export const gameResolvers = {
         }
     },
 
+    Mutation: {
+        createGame: async (parent, args) => {
+            try {
+                const [result] = await db.query(`
+                    INSERT INTO games (title, release_date, metascore, userscore, description, developer, publisher)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+                    args.title,
+                    args.release_date ?? null,
+                    args.metascore ?? null,
+                    args.userscore ?? null,
+                    args.description ?? null,
+                    args.developer ?? null,
+                    args.publisher ?? null
+                ]);
+
+                console.log('Insert result:', result);
+
+                return { id: result.insertId, ...args };
+            } catch (error) {
+                console.error('Error creating game:', error);
+                throw new Error('Failed to create game');
+            }
+        },
+
+        // not optimal but it works for now, will refactor later
+        updateGame: async (parent, args) => {
+            try {
+                const fields = [];
+                const params = [];
+
+                if (args.title) {
+                    fields.push('title = ?');
+                    params.push(args.title);
+                }
+
+                if (args.release_date) {
+                    fields.push('release_date = ?');
+                    params.push(args.release_date);
+                }
+
+                if (args.metascore) {
+                    fields.push('metascore = ?');
+                    params.push(args.metascore);
+                }
+
+                if (args.userscore) {
+                    fields.push('userscore = ?');
+                    params.push(args.userscore);
+                }
+
+                if (args.description) {
+                    fields.push('description = ?');
+                    params.push(args.description);
+                }
+
+                if (args.developer) {
+                    fields.push('developer = ?');
+                    params.push(args.developer);
+                }
+
+                if (args.publisher) {
+                    fields.push('publisher = ?');
+                    params.push(args.publisher);
+                }
+
+                if (fields.length === 0) {
+                    return null;
+                }
+
+                params.push(args.id);
+
+                const [result] = await db.query(`UPDATE games SET ${fields.join(', ')} WHERE id = ?`, params);
+                return { id: args.id, ...args };
+            } catch (error) {
+                console.error('Error updating game:', error);
+                throw new Error('Failed to update game');
+            }
+        },
+
+        deleteGame: async (parent, args) => {
+            try {
+                const [result] = await db.query('DELETE FROM games WHERE id = ?', [args.id]);
+                return result.affectedRows > 0;
+            } catch (error) {
+                console.error('Error deleting game:', error);
+                throw new Error('Failed to delete game');
+            }
+        }
+    },
+
     Game: {
         genres: async (parent) => {
             try {
