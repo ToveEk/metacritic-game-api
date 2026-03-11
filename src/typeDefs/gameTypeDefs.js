@@ -1,8 +1,14 @@
 import { gql } from "graphql-tag"
 
 export const gameTypeDefs = gql`
+    type GameConnection {
+        games: [Game]
+        totalCount: Int
+        hasNextPage: Boolean
+    }
+
     type Query {
-        games(title: String, limit: Int, offset: Int): [Game]
+        games(title: String, limit: Int, offset: Int): GameConnection
         game(id: Int!): Game
     }
 
