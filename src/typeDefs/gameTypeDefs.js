@@ -6,6 +6,11 @@ export const gameTypeDefs = gql`
         game(id: Int!): Game
     }
 
+    type DeleteResult {
+        success: Boolean!
+        message: String!
+    }
+
     type Mutation {
         createGame(
             title: String!
@@ -32,7 +37,7 @@ export const gameTypeDefs = gql`
             platformIds: [Int]
         ): Game
 
-        deleteGame(id: Int!): Boolean
+        deleteGame(id: Int!): DeleteResult
     }
 
     type Game {
