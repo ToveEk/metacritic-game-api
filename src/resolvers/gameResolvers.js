@@ -1,5 +1,8 @@
 import { db } from "../config/db.js"
 
+/**
+ * Resolvers for the Game type, including queries for fetching games and mutations for creating, updating, and deleting games. Also includes resolvers for fetching related genres and platforms for a game.
+ */
 export const gameResolvers = {
     Query: {
         games: async (parent, args) => {

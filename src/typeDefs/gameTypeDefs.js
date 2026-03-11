@@ -1,5 +1,8 @@
 import { gql } from "graphql-tag"
 
+/**
+ * GraphQL type definitions for the Game type, including queries for fetching games and mutations for creating, updating, and deleting games. Also includes a connection type for paginated results and a result type for delete operations.
+ */
 export const gameTypeDefs = gql`
     type GameConnection {
         games: [Game]

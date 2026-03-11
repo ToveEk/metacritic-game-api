@@ -1,5 +1,8 @@
 import { db } from "../config/db.js"
 
+/**
+ * Resolvers for the Platform type, including queries for fetching platforms.
+ */
 export const platformResolvers = {
     Query: {
         platforms: async () => {

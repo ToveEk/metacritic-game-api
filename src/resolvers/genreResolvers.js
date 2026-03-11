@@ -1,5 +1,8 @@
 import { db } from "../config/db.js"
 
+/**
+ * Resolvers for the Genre type, including queries for fetching genres.
+ */
 export const genreResolvers = {
     Query: {
         genres: async () => {
