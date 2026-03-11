@@ -5,11 +5,15 @@ export const gameResolvers = {
         games: async (parent, args) => {
             try {
                 let query = 'SELECT * FROM games WHERE 1=1';
+                let countQuery = 'SELECT COUNT(*) as total FROM games WHERE 1=1';
                 const params = [];
+                const countParams = [];
 
                 if (args.title) {
                     query += ' AND title LIKE ?';
+                    countQuery += ' AND title LIKE ?';
                     params.push(`%${args.title}%`);
+                    countParams.push(`%${args.title}%`);
                 }
 
                 if (args.limit) {
@@ -23,10 +27,16 @@ export const gameResolvers = {
                 }
 
                 const [rows] = await db.query(query, params);
-                return rows.map(game => ({
-                    ...game,
-                    release_date: game.release_date ? game.release_date.toISOString().split('T')[0] : null
-                }));
+                const [[{ total }]] = await db.query(countQuery, countParams);
+
+                return {
+                    games: rows.map(game => ({
+                        ...game,
+                        release_date: game.release_date ? game.release_date.toISOString().split('T')[0] : null
+                    })),
+                    totalCount: total,
+                    hasNextPage: total > (args.offset ? args.offset : 0) + (args.limit ? args.limit : 0)
+                }
             } catch (error) {
                 console.error('Error fetching game data:', error);
                 throw new Error('Failed to fetch game data');
