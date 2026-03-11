@@ -62,8 +62,6 @@ export const gameResolvers = {
                     args.publisher ?? null
                 ]);
 
-                console.log('Insert result:', result);
-
                 return { id: result.insertId, ...args };
             } catch (error) {
                 console.error('Error creating game:', error);
@@ -112,14 +110,32 @@ export const gameResolvers = {
                     params.push(args.publisher);
                 }
 
+                if (args.platformIds) {
+                    for (const platformId of args.platformIds) {
+                        await db.query('INSERT IGNORE INTO game_platforms (game_id, platform_id) VALUES (?, ?)', [args.id, platformId]);
+                        const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+                        return rows[0];
+                    }
+                }
+
+                if (args.genreIds) {
+                    for (const genreId of args.genreIds) {
+                        await db.query('INSERT IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)', [args.id, genreId]);
+                        const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+                        return rows[0];
+                    }
+                }
+
                 if (fields.length === 0) {
                     return null;
                 }
 
                 params.push(args.id);
 
-                const [result] = await db.query(`UPDATE games SET ${fields.join(', ')} WHERE id = ?`, params);
-                return { id: args.id, ...args };
+                await db.query(`UPDATE games SET ${fields.join(', ')} WHERE id = ?`, params);
+
+                const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+                return rows[0];
             } catch (error) {
                 console.error('Error updating game:', error);
                 throw new Error('Failed to update game');
@@ -128,8 +144,13 @@ export const gameResolvers = {
 
         deleteGame: async (parent, args) => {
             try {
+                await db.query('DELETE FROM game_genres WHERE game_id = ?', [args.id]);
+                await db.query('DELETE FROM game_platforms WHERE game_id = ?', [args.id]);
                 const [result] = await db.query('DELETE FROM games WHERE id = ?', [args.id]);
-                return result.affectedRows > 0;
+                return {
+                    success: result.affectedRows > 0,
+                    message: result.affectedRows > 0 ? 'Game deleted successfully' : 'Game not found'
+                }
             } catch (error) {
                 console.error('Error deleting game:', error);
                 throw new Error('Failed to delete game');
