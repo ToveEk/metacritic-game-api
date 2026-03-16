@@ -3,12 +3,13 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-
 import { typeDefs } from "./typeDefs/typeDefs.js";
 import { resolvers } from "./resolvers/resolvers.js";
+import { AuthHelper } from "./lib/authHelper.js";
 
 dotenv.config();
 
+// Start the server
 try {
   const app = express();
   app.use(cors());
@@ -17,7 +18,15 @@ try {
   const server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
 
-  app.use("/graphql", expressMiddleware(server));
+  app.use("/graphql",
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        const token = req.headers.authorization?.split("Bearer ")[1] || null;
+        const user = AuthHelper.getUserFromToken(token);
+        return { user };
+      }
+    })
+  );
 
   const port = Number(process.env.PORT || 3700);
   app.listen(port, () => {
