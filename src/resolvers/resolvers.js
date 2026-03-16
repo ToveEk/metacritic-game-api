@@ -1,6 +1,7 @@
 import { gameResolvers } from "./gameResolvers.js"
 import { genreResolvers } from "./genreResolvers.js"
 import { platformResolvers } from "./platformResolvers.js"
+import { userResolvers } from "./userResolvers.js"
 
 /**
  * Combined GraphQL resolvers for the entire API, including resolvers for games, genres, and platforms.
@@ -10,10 +11,12 @@ export const resolvers = {
         ...gameResolvers.Query,
         ...genreResolvers.Query,
         ...platformResolvers.Query
+
     },
 
     Mutation: {
-        ...gameResolvers.Mutation
+        ...gameResolvers.Mutation,
+        ...userResolvers.Mutation
     },
 
     Game: {
