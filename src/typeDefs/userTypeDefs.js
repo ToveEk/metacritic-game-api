@@ -14,6 +14,10 @@ type AuthPayload {
     token: String!
 }
 
+type Query {
+    getUser(id: ID!): User
+}
+
 type Mutation {
     createUser(
         username: String!
@@ -21,6 +25,11 @@ type Mutation {
         password: String!
         firstName: String
         lastName: String
+    ): AuthPayload!
+
+    loginUser(
+        email: String!
+        password: String!
     ): AuthPayload!
 }
 `

@@ -1,4 +1,5 @@
 import { db } from "../config/db.js"
+import { AuthHelper } from "../lib/authHelper.js";
 
 /**
  * Resolvers for the Game type, including queries for fetching games and mutations for creating, updating, and deleting games. Also includes resolvers for fetching related genres and platforms for a game.
@@ -52,7 +53,12 @@ export const gameResolvers = {
                 if (rows.length === 0) {
                     return null;
                 }
-                return rows[0];
+
+                const game = rows[0];
+                return {
+                    ...game,
+                    release_date: game.release_date ? game.release_date.toISOString().split('T')[0] : null
+                };
             } catch (error) {
                 console.error('Error fetching game by ID:', error);
                 throw new Error('Failed to fetch game by ID');
@@ -61,7 +67,8 @@ export const gameResolvers = {
     },
 
     Mutation: {
-        createGame: async (parent, args) => {
+        createGame: async (parent, args, context) => {
+            AuthHelper.requireAuth(context);
             try {
                 const [result] = await db.query(`
                     INSERT INTO games (title, release_date, metascore, userscore, description, developer, publisher)
@@ -83,7 +90,8 @@ export const gameResolvers = {
         },
 
         // not optimal but it works for now, will refactor later
-        updateGame: async (parent, args) => {
+        updateGame: async (parent, args, context) => {
+            AuthHelper.requireAuth(context);
             try {
                 const fields = [];
                 const params = [];
@@ -155,7 +163,8 @@ export const gameResolvers = {
             }
         },
 
-        deleteGame: async (parent, args) => {
+        deleteGame: async (parent, args, context) => {
+            AuthHelper.requireAuth(context);
             try {
                 await db.query('DELETE FROM game_genres WHERE game_id = ?', [args.id]);
                 await db.query('DELETE FROM game_platforms WHERE game_id = ?', [args.id]);
