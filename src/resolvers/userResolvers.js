@@ -1,18 +1,24 @@
 import { User } from '../models/userModel.js';
 import { JsonWebToken } from '../lib/jsonWebToken.js';
 import fs from 'fs';
+import { GraphQLError } from 'graphql';
 
 export const userResolvers = {
     Query: {
-        getUser: async (_, { args }) => {
+        getUser: async (_, { email }) => {
             try {
-                const user = await User.findUserByEmail(args.id);
+                const user = await User.findUserByEmail(email);
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new GraphQLError('User not found', { extensions: { code: 'NOT_FOUND' } });
                 }
                 return user;
             } catch (error) {
-                throw new Error('Failed to fetch user: ' + error.message);
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error fetching user:', error);
+                    throw new GraphQLError('Failed to fetch user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
             }
         }
     },
@@ -40,7 +46,9 @@ export const userResolvers = {
                     token
                 };
             } catch (error) {
-                throw new Error('Failed to create user: ' + error.message);
+                console.error('Error creating user:', error);
+                throw new GraphQLError('Failed to create user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+
             }
         },
 
@@ -48,12 +56,12 @@ export const userResolvers = {
             try {
                 const user = await User.findUserByEmail(email);
                 if (!user) {
-                    throw new Error('User not found');
+                    throw new GraphQLError('User not found', { extensions: { code: 'NOT_FOUND' } });
                 }
 
                 const isPasswordValid = await User.verifyPassword(password, user.password_hash);
                 if (!isPasswordValid) {
-                    throw new Error('Invalid password');
+                    throw new GraphQLError('Invalid password', { extensions: { code: 'UNAUTHENTICATED' } });
                 }
 
                 const privateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH, 'utf8');
@@ -69,7 +77,12 @@ export const userResolvers = {
                 };
 
             } catch (error) {
-                throw new Error('Failed to login user: ' + error.message);
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error logging in user:', error);
+                    throw new GraphQLError('Failed to login user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
             }
         }
     }

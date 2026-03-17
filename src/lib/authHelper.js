@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import dotenv from "dotenv";
+import { GraphQLError } from "graphql";
 
 dotenv.config()
 
@@ -20,7 +21,7 @@ export class AuthHelper {
 
     static requireAuth = (context) => {
         if (!context.user) {
-            throw new Error("Unauthorized");
+            throw new GraphQLError('Authentication required', { extensions: { code: 'UNAUTHENTICATED' } });
         }
         return context.user;
     }

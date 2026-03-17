@@ -15,7 +15,16 @@ try {
   app.use(cors());
   app.use(express.json());
 
-  const server = new ApolloServer({ typeDefs, resolvers });
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    formatError: (error) => {
+      return {
+        message: error.message,
+        code: error.extensions?.code || "INTERNAL_SERVER_ERROR",
+      }
+    }
+  });
   await server.start();
 
   app.use("/graphql",

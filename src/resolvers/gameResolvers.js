@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { db } from "../config/db.js"
 import { AuthHelper } from "../lib/authHelper.js";
 
@@ -42,16 +43,17 @@ export const gameResolvers = {
                     hasNextPage: total > (args.offset ? args.offset : 0) + (args.limit ? args.limit : 0)
                 }
             } catch (error) {
-                console.error('Error fetching game data:', error);
-                throw new Error('Failed to fetch game data');
+                console.error('Error fetching games:', error);
+                throw new GraphQLError('Failed to fetch games', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         },
 
         game: async (parent, args) => {
             try {
                 const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+
                 if (rows.length === 0) {
-                    return null;
+                    throw new GraphQLError('Game not found', { extensions: { code: 'NOT_FOUND' } });
                 }
 
                 const game = rows[0];
@@ -60,10 +62,14 @@ export const gameResolvers = {
                     release_date: game.release_date ? game.release_date.toISOString().split('T')[0] : null
                 };
             } catch (error) {
-                console.error('Error fetching game by ID:', error);
-                throw new Error('Failed to fetch game by ID');
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    throw new GraphQLError('Failed to fetch game data', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+
+                }
             }
-        }
+        },
     },
 
     Mutation: {
@@ -82,10 +88,11 @@ export const gameResolvers = {
                     args.publisher ?? null
                 ]);
 
-                return { id: result.insertId, ...args };
+                const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [result.insertId]);
+                return rows[0];
             } catch (error) {
                 console.error('Error creating game:', error);
-                throw new Error('Failed to create game');
+                throw new GraphQLError('Failed to create game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         },
 
@@ -134,32 +141,30 @@ export const gameResolvers = {
                 if (args.platformIds) {
                     for (const platformId of args.platformIds) {
                         await db.query('INSERT IGNORE INTO game_platforms (game_id, platform_id) VALUES (?, ?)', [args.id, platformId]);
-                        const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
-                        return rows[0];
                     }
                 }
 
                 if (args.genreIds) {
                     for (const genreId of args.genreIds) {
                         await db.query('INSERT IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)', [args.id, genreId]);
-                        const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
-                        return rows[0];
                     }
                 }
 
-                if (fields.length === 0) {
+                if (fields.length === 0 && !args.platformIds && !args.genreIds) {
                     return null;
                 }
 
-                params.push(args.id);
+                if (fields.length > 0) {
+                    params.push(args.id);
 
-                await db.query(`UPDATE games SET ${fields.join(', ')} WHERE id = ?`, params);
+                    await db.query(`UPDATE games SET ${fields.join(', ')} WHERE id = ?`, params);
+                }
 
                 const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
                 return rows[0];
             } catch (error) {
                 console.error('Error updating game:', error);
-                throw new Error('Failed to update game');
+                throw new GraphQLError('Failed to update game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         },
 
@@ -175,7 +180,7 @@ export const gameResolvers = {
                 }
             } catch (error) {
                 console.error('Error deleting game:', error);
-                throw new Error('Failed to delete game');
+                throw new GraphQLError('Failed to delete game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         }
     },
@@ -192,7 +197,7 @@ export const gameResolvers = {
                 return rows;
             } catch (error) {
                 console.error('Error fetching genre data for game:', error);
-                throw new Error('Failed to fetch genre data for game');
+                throw new GraphQLError('Failed to fetch genre data for game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         },
 
@@ -207,8 +212,8 @@ export const gameResolvers = {
                 return rows;
             } catch (error) {
                 console.error('Error fetching platform data for game:', error);
-                throw new Error('Failed to fetch platform data for game');
+                throw new GraphQLError('Failed to fetch platform data for game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         }
     }
-};
+}

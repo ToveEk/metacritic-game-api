@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { db } from '../config/db.js';
+import { GraphQLError } from 'graphql';
 
 /**
  * User model for handling user-related database operations.
@@ -34,7 +35,7 @@ export class User {
             };
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
-                throw new Error('Username or email already exists');
+                throw new GraphQLError('Email or username already exists', { extensions: { code: 'BAD_USER_INPUT' } });
             }
             throw error;
 

@@ -15,7 +15,7 @@ type AuthPayload {
 }
 
 type Query {
-    getUser(id: ID!): User
+    getUser(email: String!): User
 }
 
 type Mutation {
