@@ -11,10 +11,10 @@ export const gameTypeDefs = gql`
     }
 
     type Query {
-        games(title: String, limit: Int, offset: Int): GameConnection
+        games(title: String, minMetascore: Int,limit: Int, offset: Int): GameConnection
         game(id: Int!): Game
     }
-
+    
     type DeleteResult {
         success: Boolean!
         message: String!

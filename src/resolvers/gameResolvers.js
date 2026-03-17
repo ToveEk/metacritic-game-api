@@ -21,6 +21,13 @@ export const gameResolvers = {
                     countParams.push(`%${args.title}%`);
                 }
 
+                if (args.minMetascore) {
+                    query += ' AND metascore >= ?';
+                    countQuery += ' AND metascore >= ?';
+                    params.push(args.minMetascore);
+                    countParams.push(args.minMetascore);
+                }
+
                 if (args.limit) {
                     query += ' LIMIT ?';
                     params.push(args.limit);
