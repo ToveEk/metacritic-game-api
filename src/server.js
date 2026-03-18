@@ -21,7 +21,9 @@ try {
     formatError: (error) => {
       return {
         message: error.message,
-        code: error.extensions?.code || "INTERNAL_SERVER_ERROR",
+        extensions: {
+          code: error.extensions?.code || "INTERNAL_SERVER_ERROR",
+        }
       }
     }
   });
