@@ -26,6 +26,12 @@ export const userResolvers = {
     Mutation: {
         createUser: async (_, args) => {
             try {
+                const existingUser = await User.findUserByEmail(args.email);
+
+                if (existingUser) {
+                    throw new GraphQLError('Email already in use', { extensions: { code: 'BAD_USER_INPUT' } });
+                }
+
                 const newUser = await User.createUser(
                     args.username,
                     args.email,
@@ -46,9 +52,12 @@ export const userResolvers = {
                     token
                 };
             } catch (error) {
-                console.error('Error creating user:', error);
-                throw new GraphQLError('Failed to create user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error creating user:', error);
+                    throw new GraphQLError('Failed to create user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
             }
         },
 

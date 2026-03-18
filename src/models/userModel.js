@@ -34,11 +34,8 @@ export class User {
                 last_name: lastName
             };
         } catch (error) {
-            if (error.code === 'ER_DUP_ENTRY') {
-                throw new GraphQLError('Email or username already exists', { extensions: { code: 'BAD_USER_INPUT' } });
-            }
-            throw error;
-
+            console.error('Error creating user:', error);
+            throw new GraphQLError('Failed to create user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
         }
     }
 
