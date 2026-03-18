@@ -95,11 +95,20 @@ export const gameResolvers = {
                     args.publisher ?? null
                 ]);
 
+                if (!args.title) {
+                    throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
+                }
+
                 const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [result.insertId]);
+
                 return rows[0];
             } catch (error) {
-                console.error('Error creating game:', error);
-                throw new GraphQLError('Failed to create game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error creating game:', error);
+                    throw new GraphQLError('Failed to create game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
             }
         },
 
@@ -157,10 +166,6 @@ export const gameResolvers = {
                     }
                 }
 
-                if (fields.length === 0 && !args.platformIds && !args.genreIds) {
-                    return null;
-                }
-
                 if (fields.length > 0) {
                     params.push(args.id);
 
@@ -168,10 +173,19 @@ export const gameResolvers = {
                 }
 
                 const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [args.id]);
+
+                if (rows.length === 0) {
+                    throw new GraphQLError('Game not found', { extensions: { code: 'NOT_FOUND' } });
+                }
+
                 return rows[0];
             } catch (error) {
-                console.error('Error updating game:', error);
-                throw new GraphQLError('Failed to update game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error updating game:', error);
+                    throw new GraphQLError('Failed to update game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
             }
         },
 
