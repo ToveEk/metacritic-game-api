@@ -1,0 +1,1347 @@
+{
+  "info": {
+    "_postman_id": "b4fd11ce-74bf-4085-923d-dcd81e2f77c7",
+    "name": "metacritic_game_api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "40513152"
+  },
+  "item": [
+    {
+      "name": "Queries",
+      "item": [
+        {
+          "name": "get games",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should return games array\", function () {\r",
+                  "    pm.expect(json.data.games.games).to.be.an('array');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should return totalCount number\", function () {\r",
+                  "    pm.expect(json.data.games.totalCount).to.be.a('number');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should return hasNextPage\", function () {\r",
+                  "    pm.expect(json.data.games.hasNextPage).to.equal(true);\r",
+                  "})\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ games { totalCount hasNextPage games { id title } } }\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get games with limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"firstGameId\", json.data.games.games[0].id);\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should have limit of 10\", function () {\r",
+                  "    pm.expect(json.data.games.games).to.have.lengthOf(10)\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ games(limit: 10) { totalCount hasNextPage games { id title } } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get games with offset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "const firstGameId = pm.environment.get(\"firstGameId\")\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Offset should skip first game\", function () {\r",
+                  "    const ids = json.data.games.games.map(game => game.id);\r",
+                  "    pm.expect(ids).to.not.include(firstGameId)\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ games(limit: 10, offset: 1) { totalCount hasNextPage games { id title } } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get games with title filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should filter by title\", function () {\r",
+                  "    json.data.games.games.forEach(game => {\r",
+                  "        pm.expect(game.title.toLowerCase()).to.include(\"zelda\");\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ games(title: \\\"Zelda\\\") { totalCount hasNextPage games { id title } } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get games with minMetascore filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should return games with minimum metascore of 95\", function () {\r",
+                  "    json.data.games.games.forEach(game => {\r",
+                  "        pm.expect(game.metascore).to.be.at.least(95)\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ games(minMetascore: 95) { totalCount hasNextPage games { id title metascore } } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get game by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get games should filter by id\", function () {\r",
+                  "    pm.expect(json.data.game.id).to.equal(31490)\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ game(id: 31490) { id title } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get game by invalid id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Invalid ID should return NOT_FOUND error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"NOT_FOUND\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ game(id: 0) { id title } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get genres",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get genres should return all genres\", function () {\r",
+                  "    pm.expect(json.data.genres).to.be.an('array')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ genres { id name } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get platforms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Get platsforms should return all platforms\", function () {\r",
+                  "    pm.expect(json.data.platforms).to.be.an('array')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"{ platforms { id name } }\"\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mutations",
+      "item": [
+        {
+          "name": "create game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"createdGameId\", json.data.createGame.id);\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create game should pass\", function () {\r",
+                  "    pm.expect(json.data.createGame.title).to.equal(\"Plupp\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "jwt",
+              "jwt": [
+                {
+                  "key": "privateKey",
+                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
+                  "type": "string"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "RS256",
+                  "type": "string"
+                },
+                {
+                  "key": "secret",
+                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
+                  "type": "string"
+                },
+                {
+                  "key": "isSecretBase64Encoded",
+                  "value": false,
+                  "type": "boolean"
+                },
+                {
+                  "key": "payload",
+                  "value": "{}",
+                  "type": "string"
+                },
+                {
+                  "key": "addTokenTo",
+                  "value": "header",
+                  "type": "string"
+                },
+                {
+                  "key": "headerPrefix",
+                  "value": "Bearer",
+                  "type": "string"
+                },
+                {
+                  "key": "queryParamKey",
+                  "value": "token",
+                  "type": "string"
+                },
+                {
+                  "key": "header",
+                  "value": "{}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Plupp\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Update game should return updated game\", function () {\r",
+                  "    pm.expect(json.data.updateGame.title).to.equal(\"Plupp 2\")\r",
+                  "})"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "jwt",
+              "jwt": [
+                {
+                  "key": "privateKey",
+                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
+                  "type": "string"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "RS256",
+                  "type": "string"
+                },
+                {
+                  "key": "secret",
+                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
+                  "type": "string"
+                },
+                {
+                  "key": "isSecretBase64Encoded",
+                  "value": false,
+                  "type": "boolean"
+                },
+                {
+                  "key": "payload",
+                  "value": "{}",
+                  "type": "string"
+                },
+                {
+                  "key": "addTokenTo",
+                  "value": "header",
+                  "type": "string"
+                },
+                {
+                  "key": "headerPrefix",
+                  "value": "Bearer",
+                  "type": "string"
+                },
+                {
+                  "key": "queryParamKey",
+                  "value": "token",
+                  "type": "string"
+                },
+                {
+                  "key": "header",
+                  "value": "{}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!, $title: String) { updateGame(id: $updateGameId, title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": {{createdGameId}},\r\n        \"title\": \"Plupp 2\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Delete game should return success\", function () {\r",
+                  "    pm.expect(json.data.deleteGame.success).to.equal(true);\r",
+                  "    pm.expect(json.data.deleteGame.message).to.equal(\"Game deleted successfully\")\r",
+                  "})"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "jwt",
+              "jwt": [
+                {
+                  "key": "privateKey",
+                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
+                  "type": "string"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "RS256",
+                  "type": "string"
+                },
+                {
+                  "key": "secret",
+                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
+                  "type": "string"
+                },
+                {
+                  "key": "isSecretBase64Encoded",
+                  "value": false,
+                  "type": "boolean"
+                },
+                {
+                  "key": "payload",
+                  "value": "{}",
+                  "type": "string"
+                },
+                {
+                  "key": "addTokenTo",
+                  "value": "header",
+                  "type": "string"
+                },
+                {
+                  "key": "headerPrefix",
+                  "value": "Bearer",
+                  "type": "string"
+                },
+                {
+                  "key": "queryParamKey",
+                  "value": "token",
+                  "type": "string"
+                },
+                {
+                  "key": "header",
+                  "value": "{}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation DeleteGame($deleteGameId: Int!) { deleteGame(id: $deleteGameId) { message success } }\",\r\n    \"variables\": {\r\n        \"deleteGameId\": {{createdGameId}}\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create game without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create game without token should return UNAUTHENTICATED error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Plupp\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete game without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Delete game without token should return UNAUTHENTICATED error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation DeleteGame($deleteGameId: Int!) { deleteGame(id: $deleteGameId) { message success } }\",\r\n    \"variables\": {\r\n        \"deleteGameId\": 31487\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update game without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Update game without token should return UNAUTHENTICATED error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!) { updateGame(id: $updateGameId) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": 31487\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create game without title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create game without token should return BAD_USER_INPUT error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"BAD_USER_INPUT\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "jwt",
+              "jwt": [
+                {
+                  "key": "privateKey",
+                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
+                  "type": "string"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "RS256",
+                  "type": "string"
+                },
+                {
+                  "key": "secret",
+                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
+                  "type": "string"
+                },
+                {
+                  "key": "isSecretBase64Encoded",
+                  "value": false,
+                  "type": "boolean"
+                },
+                {
+                  "key": "payload",
+                  "value": "{}",
+                  "type": "string"
+                },
+                {
+                  "key": "addTokenTo",
+                  "value": "header",
+                  "type": "string"
+                },
+                {
+                  "key": "headerPrefix",
+                  "value": "Bearer",
+                  "type": "string"
+                },
+                {
+                  "key": "queryParamKey",
+                  "value": "token",
+                  "type": "string"
+                },
+                {
+                  "key": "header",
+                  "value": "{}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update game with invalid id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Update game with invalid ID should return NOT_FOUND error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"NOT_FOUND\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "jwt",
+              "jwt": [
+                {
+                  "key": "privateKey",
+                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
+                  "type": "string"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "RS256",
+                  "type": "string"
+                },
+                {
+                  "key": "secret",
+                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
+                  "type": "string"
+                },
+                {
+                  "key": "isSecretBase64Encoded",
+                  "value": false,
+                  "type": "boolean"
+                },
+                {
+                  "key": "payload",
+                  "value": "{}",
+                  "type": "string"
+                },
+                {
+                  "key": "addTokenTo",
+                  "value": "header",
+                  "type": "string"
+                },
+                {
+                  "key": "headerPrefix",
+                  "value": "Bearer",
+                  "type": "string"
+                },
+                {
+                  "key": "queryParamKey",
+                  "value": "token",
+                  "type": "string"
+                },
+                {
+                  "key": "header",
+                  "value": "{}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!) { updateGame(id: $updateGameId) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": 0\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create user with duplicate email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user with duplicate email should return BAD_USER_INPUT error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"BAD_USER_INPUT\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"Tove\",\r\n        \"password\": \"test\",\r\n        \"email\": \"Oak@test.se\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "create user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user returns user object\", function () {\r",
+                  "    pm.expect(json.data.createUser.user).to.be.an('object');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user returns token\", function () {\r",
+                  "    pm.expect(json.data.createUser.token).to.be.a('string')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"testuser_{{$timestamp}}\",\r\n        \"password\": \"test\",\r\n        \"email\": \"test_{{$timestamp}}@test.com\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user returns user object\", function () {\r",
+                  "    pm.expect(json.data.loginUser.user).to.be.an('object');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user returns token\", function () {\r",
+                  "    pm.expect(json.data.loginUser.token).to.be.a('string')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"Oak@test.se\",\r\n        \"password\": \"testlösen\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login user with wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user with wrong password should return UNAUTHENTICATED error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"Oak@test.se\",\r\n        \"password\": \"fel\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
