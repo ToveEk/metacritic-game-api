@@ -95,7 +95,7 @@ export const gameResolvers = {
                     args.publisher ?? null
                 ]);
 
-                if (!args.title) {
+                if (!args.title || args.title.trim() === '') {
                     throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
                 }
 

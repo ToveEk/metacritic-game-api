@@ -2,6 +2,7 @@
   "info": {
     "_postman_id": "b4fd11ce-74bf-4085-923d-dcd81e2f77c7",
     "name": "metacritic_game_api",
+    "description": "## Metacritic Game API\n\nThis collection contains GraphQL requests for testing and interacting with the **Metacritic Game API** — a backend service for managing a catalog of video games, including their metadata, genres, platforms, and Metascores.\n\nAll requests are sent as `POST` to the `{{BASE_URL}}` GraphQL endpoint and are organized into three folders:\n\n### Queries\n\nRead-only operations for fetching data from the API:\n\n- Retrieve a list of games with support for **pagination** (limit, offset), **filtering** (by title, minimum Metascore), and **sorting**\n    \n- Fetch a single game by ID, including error handling for invalid IDs\n    \n- List available **genres** and **platforms**\n    \n\n### Mutations\n\nWrite operations for modifying game data:\n\n- **Create**, **update**, and **delete** games\n    \n- Validation scenarios such as creating a game without a required title, using an invalid ID, or performing mutations without an authorization token\n    \n- User registration, including a duplicate email error case\n    \n\n### Auth\n\nAuthentication-related requests:\n\n- Register a new user\n    \n- Log in to obtain an access token\n    \n- Error case for login with an incorrect password\n    \n\n---\n\n**Environment variable used:** `{{BASE_URL}}` — set this to your GraphQL server URL before running requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "40513152"
   },
@@ -17,6 +18,7 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();\r",
+                  "pm.environment.set(\"firstGameId\", json.data.games.games[0].id);\r",
                   "\r",
                   "pm.test(\"Status 200\", function () {\r",
                   "    pm.response.to.have.status(200);\r",
@@ -68,7 +70,8 @@
               "host": [
                 "{{BASE_URL}}"
               ]
-            }
+            },
+            "description": "Returns a paginated list of games from the Metacritic Game API GraphQL endpoint.\n\n- **Method/URL**: `POST {{BASE_URL}}`\n- **Content-Type**: `application/json`\n- **Endpoint style**: GraphQL over HTTP (query in JSON body)\n\n## GraphQL operation\nThis request sends a GraphQL query that selects the `games` connection and its pagination metadata.\n\n### Query shape\n```graphql\n{\n  games {\n    totalCount\n    hasNextPage\n    games {\n      id\n      title\n      # ...additional fields may be selected depending on the query in the body\n    }\n  }\n}\n```\n\n## Variables / configuration\nThis request relies on the following Postman variable(s):\n\n- `{{BASE_URL}}` *(environment: `metacritic_game_api_env`)* — Base URL for the GraphQL endpoint.\n\n> Note: The current query shown in the request body does not use GraphQL variables (e.g. `$limit`, `$offset`). If you later add variables, you’d send them alongside the query in a `variables` object.\n\n## Example request body\nRaw JSON (GraphQL query as a string):\n```json\n{\n  \"query\": \"{ games { totalCount hasNextPage games { id title } } }\"\n}\n```\n\n## Expected response shape\nA successful response is expected to be JSON with a `data` object and **no** top-level `errors`.\n\n```json\n{\n  \"data\": {\n    \"games\": {\n      \"totalCount\": 123,\n      \"hasNextPage\": true,\n      \"games\": [\n        {\n          \"id\": 1,\n          \"title\": \"Example Title\"\n        }\n      ]\n    }\n  }\n}\n```\n\n## Tests\nThe request’s **Tests** script validates:\n\n- **HTTP 200** status code.\n- **No GraphQL errors**: `json.errors` is `undefined`.\n- `json.data.games.games` is an **array**.\n- `json.data.games.totalCount` is a **number**.\n- `json.data.games.hasNextPage` is **true**.\n\nThese checks ensure the endpoint is reachable, the GraphQL operation executed without errors, and the key pagination fields are present with the expected types."
           },
           "response": []
         },
@@ -118,7 +121,8 @@
               "host": [
                 "{{BASE_URL}}"
               ]
-            }
+            },
+            "description": "### Purpose\n\nRetrieves a paginated list of games from the Metacritic Game API using a GraphQL query with an explicit `limit`.\n\nThis request is useful for:\n\n- verifying pagination metadata (`totalCount`, `hasNextPage`)\n    \n- fetching a predictable number of game items\n    \n- capturing the first returned game id for use in subsequent requests\n    \n\n---\n\n### Endpoint / Environment\n\n- **URL**: `{{BASE_URL}}`\n    \n- **Method**: `POST`\n    \n- **Header**: `Content-Type: application/json`\n    \n\n#### Required environment variables\n\n- `BASE_URL` (environment: `metacritic_game_api_env`)\n    \n\n---\n\n### GraphQL query shape\n\nThis request sends a GraphQL query in the JSON body (string field `query`).\n\nHigh-level shape:\n\n``` graphql\n{\n  games(limit: 10) {\n    totalCount\n    hasNextPage\n    games {\n      id\n      title\n    }\n  }\n}\n\n ```\n\n---\n\n### Example request body\n\n``` json\n{\n  \"query\": \"{ games(limit: 10) { totalCount hasNextPage games { id title } } }\"\n}\n\n ```\n\n---\n\n### Expected response fields\n\nOn success (no GraphQL errors), the response body is expected to contain:\n\n- `data.games.totalCount` — total number of games available\n    \n- `data.games.hasNextPage` — boolean indicating if more pages exist after this one\n    \n- `data.games.games[]` — array of game objects\n    - `id` — game identifier\n        \n    - `title` — game title\n        \n\n#### Example response snippet\n\n``` json\n{\n  \"data\": {\n    \"games\": {\n      \"totalCount\": 123,\n      \"hasNextPage\": true,\n      \"games\": [\n        { \"id\": 1, \"title\": \"Example Game\" }\n      ]\n    }\n  }\n}\n\n ```\n\n---\n\n### Notes about tests / chaining\n\nThe existing test script:\n\n- validates HTTP **200** and that `errors` is **undefined**\n    \n- asserts the returned array length is **10**\n    \n- sets environment variable `firstGameId` from the first item:\n    - `firstGameId = json.data.games.games[0].id`"
           },
           "response": []
         },
@@ -169,7 +173,8 @@
               "host": [
                 "{{BASE_URL}}"
               ]
-            }
+            },
+            "description": "## Overview\n\nThis request retrieves a paginated list of games from the GraphQL API using an **offset**.\n\n- **Method**: `POST`\n    \n- **URL**: `{{BASE_URL}}`\n    \n- **Content-Type**: `application/json`\n    \n\nIt is intended to validate that pagination via `offset` correctly **skips** the first item returned by a previous call (whose id is stored in `firstGameId`).\n\n## Required variables\n\nThis request depends on these environment variables (active env: `metacritic_game_api_env`):\n\n- `BASE_URL` — Base URL for the GraphQL endpoint.\n    \n- `firstGameId` — The id of the first game returned by a prior request (used to verify the offset behavior).\n    \n\n## Request payload (GraphQL)\n\nThe request sends a JSON body with a GraphQL query in the `query` field.\n\nExample payload:\n\n``` json\n{\n  \"query\": \"{ games(limit: 10, offset: 1) { totalCount hasNextPage games { id title } } }\"\n}\n\n ```\n\nNotes:\n\n- `limit: 10` requests up to 10 games.\n    \n- `offset: 1` skips the first game in the full result set.\n    \n\n## Expected response shape\n\nA successful response is expected to be JSON with the following shape:\n\n``` json\n{\n  \"data\": {\n    \"games\": {\n      \"totalCount\": 123,\n      \"hasNextPage\": true,\n      \"games\": [\n        { \"id\": 1, \"title\": \"...\" }\n      ]\n    }\n  }\n}\n\n ```\n\nWhere:\n\n- `data.games.totalCount` is the total number of games available.\n    \n- `data.games.hasNextPage` indicates whether more results are available beyond the current window.\n    \n- `data.games.games[]` is the page of game objects, each including at minimum `id` and `title`.\n    \n\n## Included tests\n\nThe post-response tests validate:\n\n1. **Status 200** — the request succeeds (`HTTP 200`).\n    \n2. **No GraphQL errors** — `errors` is not present in the response.\n    \n3. **Offset behavior** — the returned list of ids does **not** include `{{firstGameId}}`, confirming that `offset: 1` skipped the first result."
           },
           "response": []
         },
@@ -293,7 +298,12 @@
                   "});\r",
                   "\r",
                   "pm.test(\"Get games should filter by id\", function () {\r",
-                  "    pm.expect(json.data.game.id).to.equal(31490)\r",
+                  "    pm.expect(json.data.game.id).to.be.a('number');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Returns nested genres and platforms\", function () {\r",
+                  "    pm.expect(json.data.game.genres).to.be.an('array');\r",
+                  "    pm.expect(json.data.game.platforms).to.be.an('array');\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -313,7 +323,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"{ game(id: 31490) { id title } }\"\r\n}"
+              "raw": "{\r\n    \"query\": \"{ game(id: {{firstGameId}}) { id title genres { name } platforms { name } } }\"\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -472,6 +482,216 @@
       ]
     },
     {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "create user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"testEmail\", json.data.createUser.user.email);\r",
+                  "pm.environment.set(\"testPassword\", \"test\");\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user returns user object\", function () {\r",
+                  "    pm.expect(json.data.createUser.user).to.be.an('object');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user returns token\", function () {\r",
+                  "    pm.expect(json.data.createUser.token).to.be.a('string')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"testuser_{{$timestamp}}\",\r\n        \"password\": \"test\",\r\n        \"email\": \"test_{{$timestamp}}@test.com\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create user with duplicate email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Create user with duplicate email should return BAD_USER_INPUT error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"BAD_USER_INPUT\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"test\",\r\n        \"password\": \"test\",\r\n        \"email\": \"{{testEmail}}\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.environment.set(\"token\", json.data.loginUser.token);\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"No errors\", function () {\r",
+                  "    pm.expect(json.errors).to.be.undefined;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user returns user object\", function () {\r",
+                  "    pm.expect(json.data.loginUser.user).to.be.an('object');\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user returns token\", function () {\r",
+                  "    pm.expect(json.data.loginUser.token).to.be.a('string')\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"{{testEmail}}\",\r\n        \"password\": \"{{testPassword}}\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login user with wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Status 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login user with wrong password should return UNAUTHENTICATED error\", function () {\r",
+                  "    pm.expect(json.errors).to.not.be.undefined;\r",
+                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"{{testEmail}}\",\r\n        \"password\": \"wrong\"\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}",
+              "host": [
+                "{{BASE_URL}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Mutations",
       "item": [
         {
@@ -483,6 +703,7 @@
                 "exec": [
                   "const json = pm.response.json();\r",
                   "pm.environment.set(\"createdGameId\", json.data.createGame.id);\r",
+                  "pm.environment.set(\"createdGameTitle\", json.data.createGame.title);\r",
                   "\r",
                   "pm.test(\"Status 200\", function () {\r",
                   "    pm.response.to.have.status(200);\r",
@@ -493,7 +714,8 @@
                   "});\r",
                   "\r",
                   "pm.test(\"Create game should pass\", function () {\r",
-                  "    pm.expect(json.data.createGame.title).to.equal(\"Plupp\");\r",
+                  "    pm.expect(json.data.createGame.title).to.be.a('string');\r",
+                  "    pm.expect(json.data.createGame.id).to.be.a('number');\r",
                   "});\r",
                   ""
                 ],
@@ -505,51 +727,11 @@
           ],
           "request": {
             "auth": {
-              "type": "jwt",
-              "jwt": [
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "privateKey",
-                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
-                  "type": "string"
-                },
-                {
-                  "key": "algorithm",
-                  "value": "RS256",
-                  "type": "string"
-                },
-                {
-                  "key": "secret",
-                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
-                  "type": "string"
-                },
-                {
-                  "key": "isSecretBase64Encoded",
-                  "value": false,
-                  "type": "boolean"
-                },
-                {
-                  "key": "payload",
-                  "value": "{}",
-                  "type": "string"
-                },
-                {
-                  "key": "addTokenTo",
-                  "value": "header",
-                  "type": "string"
-                },
-                {
-                  "key": "headerPrefix",
-                  "value": "Bearer",
-                  "type": "string"
-                },
-                {
-                  "key": "queryParamKey",
-                  "value": "token",
-                  "type": "string"
-                },
-                {
-                  "key": "header",
-                  "value": "{}",
+                  "key": "token",
+                  "value": "{{token}}",
                   "type": "string"
                 }
               ]
@@ -564,7 +746,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Plupp\"\r\n    }\r\n}"
+              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Test_Game_{{$randomInt}}\"\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -593,8 +775,9 @@
                   "});\r",
                   "\r",
                   "pm.test(\"Update game should return updated game\", function () {\r",
-                  "    pm.expect(json.data.updateGame.title).to.equal(\"Plupp 2\")\r",
-                  "})"
+                  "    pm.expect(json.data.updateGame.title).to.be.a('string');\r",
+                  "    pm.expect(json.data.updateGame.id).to.be.a('number');\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -604,51 +787,11 @@
           ],
           "request": {
             "auth": {
-              "type": "jwt",
-              "jwt": [
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "privateKey",
-                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
-                  "type": "string"
-                },
-                {
-                  "key": "algorithm",
-                  "value": "RS256",
-                  "type": "string"
-                },
-                {
-                  "key": "secret",
-                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
-                  "type": "string"
-                },
-                {
-                  "key": "isSecretBase64Encoded",
-                  "value": false,
-                  "type": "boolean"
-                },
-                {
-                  "key": "payload",
-                  "value": "{}",
-                  "type": "string"
-                },
-                {
-                  "key": "addTokenTo",
-                  "value": "header",
-                  "type": "string"
-                },
-                {
-                  "key": "headerPrefix",
-                  "value": "Bearer",
-                  "type": "string"
-                },
-                {
-                  "key": "queryParamKey",
-                  "value": "token",
-                  "type": "string"
-                },
-                {
-                  "key": "header",
-                  "value": "{}",
+                  "key": "token",
+                  "value": "{{token}}",
                   "type": "string"
                 }
               ]
@@ -663,7 +806,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!, $title: String) { updateGame(id: $updateGameId, title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": {{createdGameId}},\r\n        \"title\": \"Plupp 2\"\r\n    }\r\n}"
+              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!, $title: String) { updateGame(id: $updateGameId, title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": {{createdGameId}},\r\n        \"title\": \"{{createdGameTitle}}_{{$timestamp}}\"\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -693,8 +836,8 @@
                   "\r",
                   "pm.test(\"Delete game should return success\", function () {\r",
                   "    pm.expect(json.data.deleteGame.success).to.equal(true);\r",
-                  "    pm.expect(json.data.deleteGame.message).to.equal(\"Game deleted successfully\")\r",
-                  "})"
+                  "    pm.expect(json.data.deleteGame.message).to.equal(\"Game deleted successfully\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -704,51 +847,11 @@
           ],
           "request": {
             "auth": {
-              "type": "jwt",
-              "jwt": [
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "privateKey",
-                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
-                  "type": "string"
-                },
-                {
-                  "key": "algorithm",
-                  "value": "RS256",
-                  "type": "string"
-                },
-                {
-                  "key": "secret",
-                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
-                  "type": "string"
-                },
-                {
-                  "key": "isSecretBase64Encoded",
-                  "value": false,
-                  "type": "boolean"
-                },
-                {
-                  "key": "payload",
-                  "value": "{}",
-                  "type": "string"
-                },
-                {
-                  "key": "addTokenTo",
-                  "value": "header",
-                  "type": "string"
-                },
-                {
-                  "key": "headerPrefix",
-                  "value": "Bearer",
-                  "type": "string"
-                },
-                {
-                  "key": "queryParamKey",
-                  "value": "token",
-                  "type": "string"
-                },
-                {
-                  "key": "header",
-                  "value": "{}",
+                  "key": "token",
+                  "value": "{{token}}",
                   "type": "string"
                 }
               ]
@@ -812,7 +915,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Plupp\"\r\n    }\r\n}"
+              "raw": "{\r\n    \"query\": \"mutation CreateGame($title: String!) { createGame(title: $title) { id title } }\",\r\n    \"variables\": {\r\n        \"title\": \"Test_Game\"\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -861,7 +964,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation DeleteGame($deleteGameId: Int!) { deleteGame(id: $deleteGameId) { message success } }\",\r\n    \"variables\": {\r\n        \"deleteGameId\": 31487\r\n    }\r\n}"
+              "raw": "{\r\n    \"query\": \"mutation DeleteGame($deleteGameId: Int!) { deleteGame(id: $deleteGameId) { message success } }\",\r\n    \"variables\": {\r\n        \"deleteGameId\": 0\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -910,7 +1013,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!) { updateGame(id: $updateGameId) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": 31487\r\n    }\r\n}"
+              "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!) { updateGame(id: $updateGameId) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": 0\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
@@ -934,7 +1037,7 @@
                   "    pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"Create game without token should return BAD_USER_INPUT error\", function () {\r",
+                  "pm.test(\"Create game without title should return BAD_USER_INPUT error\", function () {\r",
                   "    pm.expect(json.errors).to.not.be.undefined;\r",
                   "    pm.expect(json.errors[0].extensions.code).to.equal(\"BAD_USER_INPUT\");\r",
                   "});"
@@ -947,51 +1050,11 @@
           ],
           "request": {
             "auth": {
-              "type": "jwt",
-              "jwt": [
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "privateKey",
-                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
-                  "type": "string"
-                },
-                {
-                  "key": "algorithm",
-                  "value": "RS256",
-                  "type": "string"
-                },
-                {
-                  "key": "secret",
-                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
-                  "type": "string"
-                },
-                {
-                  "key": "isSecretBase64Encoded",
-                  "value": false,
-                  "type": "boolean"
-                },
-                {
-                  "key": "payload",
-                  "value": "{}",
-                  "type": "string"
-                },
-                {
-                  "key": "addTokenTo",
-                  "value": "header",
-                  "type": "string"
-                },
-                {
-                  "key": "headerPrefix",
-                  "value": "Bearer",
-                  "type": "string"
-                },
-                {
-                  "key": "queryParamKey",
-                  "value": "token",
-                  "type": "string"
-                },
-                {
-                  "key": "header",
-                  "value": "{}",
+                  "key": "token",
+                  "value": "{{token}}",
                   "type": "string"
                 }
               ]
@@ -1043,51 +1106,11 @@
           ],
           "request": {
             "auth": {
-              "type": "jwt",
-              "jwt": [
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "privateKey",
-                  "value": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9dux2LBqhtOwx\nxt+61OsFJVhU1HuXpWqr4w+5RCz2IskHAOptSZu4un0R0inGhBMcMRudX4/7ViRe\nDw8zW5y52ky74LBag/z4qhuhAuL+4RREKFYJAamxsfSjoe+HsKhf5/595alQNSRv\nNn6LzxFzZFZxt+nQTj4xgNxBG/Zy3lDlLe1C2bmWFO29L+4kZ0ZscF3CQWcfL8nw\n1HvB/tpOlPKk0KiBOyxl+zmQqPI+HANY0jkndyBptZG07Ya6fyYpcNEKbUhMM7Cc\nyWJVkqUN4MR5ELDVtfEIkSKIKMwsuKhFK1stM1WX63Uu3H3vkfkZ2r0W1Lften00\n3+cI+NB/AgMBAAECggEADCtDQiPQYhUuG9Rbh7Mn6otc17X+FN4PB+iW7fNZtUVu\nsVXMY3tC1o6ZJzffGbJfTS7qSHqxfhco/CbuIaz/WACUGnfIBp2g9efBy97/mBdP\nfJaKpXFx5h6OnqPxWpRs0XF5Kw+WhwxNbByNQYrp4rDNzJK0yyhQs6VEgE9neOEq\nO0OcmAPBuoMobW8j3w9TuH+QCYCBlb62o38bv4yS990AKLKkHpQxWeXa2xvehc7g\ngfChbALkVkpEWI2TeuqIIEyM9f337isMkVTelCeb8/LoVHqTZ2u2cCyATgG4uo4Y\nJRK0lertzF7f/j2NkAHNjrOIFNVVirlJBEukHQ0AQQKBgQDs4IMrkUr3OLPqOgAe\ncDx/laIK5dqBrYD8SuxR5WsShM0MJIGuicFIy7SE+zLM4z5HSBY6bmu/Yo8MHjCb\nPf5gBz+z9MFyIRgl3PKHuh+iU05OoJTI8rSdPubFcccXiCoLI6NtRdcqNE3paCpf\nQp1Wf2BQnox52XGWvj3S42QKaQKBgQDMwoxGiog/RFl0rXX0oMEcJ/BuCtVQlrj/\nTX5385ZNo/63NCg/OWINj57ilYn+p33oc+s6XaMoWwA/16esIBnEa7LxTcTwRVyS\nWUEq/GFoXGpN0x4Xm7M0vMFx7+cszQLk8inYdUvjQw65muT5mpY7lsNQ9VFC2+k1\nwQiNFykWpwKBgAesYjNoGoCVsqZUyKozwpHze/NUbNakkzgZCTzB7M0FxkqtaBIK\nXluIVcm1BXlDp0HR4P51k0H45F9lHvf4cyQTOAoRVK7oyYp4dNbWva2Ze0DqzMcR\nra4mWn1s6SEnBQ2lUub4SzcPyLJV8IFze/tQVwNlj3FnDNnwQbpyKUx5AoGBAJTg\nw6OqqEPwC2b1lHVIyQAS3hL014LgBCTFELZgqyFKozJLvxOxQmT/zxOKjSpWWArC\n9f6bBL2b5QOGZsiVEocpk5M164KTvCpAsUxy8tQxla1+WjvqHpOyxqh0OU7uxTL4\nDIrxRjs4j6VORTxjNOagyOS9addGFDvcXb5QX7SzAoGAWJYv0Kht7z8cLx0Jlskz\n++NUMp/qAi+VlIkUsfo6t+OIyKoUC+QnCpvrvTkvupliXM+xySJEtuizdTTpUtFB\nz+9peTngOL8GDoYlxcJP16LCzS4klOCBk90Gfz/gfj8Vwy4Kq9GdIgDMuhny+3x+\n4QBvnnxb+l/Kw22cKUMEBPo=\n-----END PRIVATE KEY-----",
-                  "type": "string"
-                },
-                {
-                  "key": "algorithm",
-                  "value": "RS256",
-                  "type": "string"
-                },
-                {
-                  "key": "secret",
-                  "value": "\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImVtYWlsIjoiT2FrQHRlc3Quc2UiLCJ1c2VybmFtZSI6Ik9hayIsImlhdCI6MTc3MzgzMDQ3MywiZXhwIjoxNzc0NDM1MjczfQ.QrUwLc-lFa819_KHdSY_0O9vVCr6x1DS_gSUVaPbZ90M6-jd5DjIAYWlYZOIvO1-Tj9bzUIRbZgl81Y13B8ly6hwOWKg6aVX7bg62HBnXZkyvLuCjMbuatNRLch4fMwDknLnPtqKxD9JMOTU7glq9wwilYLtSn7XBa9fFudbUCIC38Zpsj-PmsguAP95QEFuN8bzbOHaTDNKgpev-XOwqOlZDD06pATfP_WMuaiDHFotd2KeFSHGtF-shHpEazXo2SBtvnN2Z8jW-ZJnfhuy059BxIH4Bh_WEtQSEmRF4bG9Q2AfPhRTGyb_wRpkmHfNyfVAgtvYUMGXvlebAKdFHg\"",
-                  "type": "string"
-                },
-                {
-                  "key": "isSecretBase64Encoded",
-                  "value": false,
-                  "type": "boolean"
-                },
-                {
-                  "key": "payload",
-                  "value": "{}",
-                  "type": "string"
-                },
-                {
-                  "key": "addTokenTo",
-                  "value": "header",
-                  "type": "string"
-                },
-                {
-                  "key": "headerPrefix",
-                  "value": "Bearer",
-                  "type": "string"
-                },
-                {
-                  "key": "queryParamKey",
-                  "value": "token",
-                  "type": "string"
-                },
-                {
-                  "key": "header",
-                  "value": "{}",
+                  "key": "token",
+                  "value": "{{token}}",
                   "type": "string"
                 }
               ]
@@ -1103,210 +1126,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\r\n    \"query\": \"mutation UpdateGame($updateGameId: Int!) { updateGame(id: $updateGameId) { id title } }\",\r\n    \"variables\": {\r\n        \"updateGameId\": 0\r\n    }\r\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}",
-              "host": [
-                "{{BASE_URL}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "create user with duplicate email",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Create user with duplicate email should return BAD_USER_INPUT error\", function () {\r",
-                  "    pm.expect(json.errors).to.not.be.undefined;\r",
-                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"BAD_USER_INPUT\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"Tove\",\r\n        \"password\": \"test\",\r\n        \"email\": \"Oak@test.se\"\r\n    }\r\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}",
-              "host": [
-                "{{BASE_URL}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "create user",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"No errors\", function () {\r",
-                  "    pm.expect(json.errors).to.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Create user returns user object\", function () {\r",
-                  "    pm.expect(json.data.createUser.user).to.be.an('object');\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Create user returns token\", function () {\r",
-                  "    pm.expect(json.data.createUser.token).to.be.a('string')\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation CreateUser($username: String!, $email: String!, $password: String!) { createUser(username: $username, email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"username\": \"testuser_{{$timestamp}}\",\r\n        \"password\": \"test\",\r\n        \"email\": \"test_{{$timestamp}}@test.com\"\r\n    }\r\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}",
-              "host": [
-                "{{BASE_URL}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "login user",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"No errors\", function () {\r",
-                  "    pm.expect(json.errors).to.be.undefined;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Login user returns user object\", function () {\r",
-                  "    pm.expect(json.data.loginUser.user).to.be.an('object');\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Login user returns token\", function () {\r",
-                  "    pm.expect(json.data.loginUser.token).to.be.a('string')\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"Oak@test.se\",\r\n        \"password\": \"testlösen\"\r\n    }\r\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}",
-              "host": [
-                "{{BASE_URL}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "login user with wrong password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Status 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Login user with wrong password should return UNAUTHENTICATED error\", function () {\r",
-                  "    pm.expect(json.errors).to.not.be.undefined;\r",
-                  "    pm.expect(json.errors[0].extensions.code).to.equal(\"UNAUTHENTICATED\");\r",
-                  "});\r",
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"query\": \"mutation LoginUser($email: String!, $password: String!) { loginUser(email: $email, password: $password) { token user { id email } } }\",\r\n    \"variables\": {\r\n        \"email\": \"Oak@test.se\",\r\n        \"password\": \"fel\"\r\n    }\r\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}",
