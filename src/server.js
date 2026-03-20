@@ -40,9 +40,10 @@ try {
     })
   );
 
+  const baseUrl = process.env.BASE_URL;
   const port = Number(process.env.PORT || 3700);
   app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}/graphql`);
+    console.log(`Server is running on ${baseUrl}:${port}/graphql`);
   });
 } catch (err) {
   console.error("Failed to start server:", err);
