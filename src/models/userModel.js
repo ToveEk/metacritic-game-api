@@ -33,6 +33,7 @@ export class User {
                 first_name: firstName,
                 last_name: lastName
             };
+            
         } catch (error) {
             console.error('Error creating user:', error);
             throw new GraphQLError('Failed to create user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
