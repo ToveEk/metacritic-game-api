@@ -93,13 +93,6 @@ See [all requirements in Issues](../../issues/). Close issues as you implement t
 | Error handling (400, 401, 404 with consistent format) | [#4](../../issues/4) | :white_large_square: |
 | Filtering and pagination for large result sets | [#17](../../issues/17) | :white_large_square: |
 
-### Functional Requirements — REST
-
-| Requirement | Issue | Status |
-|---|---|---|
-| RESTful endpoints with proper HTTP methods and status codes | [#12](../../issues/12) | :white_large_square: |
-| HATEOAS (hypermedia links in responses) | [#13](../../issues/13) | :white_large_square: |
-
 ### Functional Requirements — GraphQL
 
 | Requirement | Issue | Status |
