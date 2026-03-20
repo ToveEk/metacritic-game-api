@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { ApolloServer } from "@apollo/server";
-import { ApolloServerPluginLandingPageDisabled } from '@apollo/server/plugin/disabled';
 import { expressMiddleware } from "@as-integrations/express5";
 import { typeDefs } from "./typeDefs/typeDefs.js";
 import { resolvers } from "./resolvers/resolvers.js";
@@ -19,7 +18,6 @@ try {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    plugins: [ApolloServerPluginLandingPageDisabled()],
     formatError: (error) => {
       return {
         message: error.message,
@@ -29,6 +27,7 @@ try {
       }
     }
   });
+  
   await server.start();
 
   app.use("/graphql",
