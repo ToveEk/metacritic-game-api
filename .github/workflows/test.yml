@@ -1,0 +1,73 @@
+name: Postman Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    env:
+      METACRITIC_CSV_PATH: "./data/metacritic_games.csv"
+      BASE_URL: "http://localhost:3700/graphql"
+      NODE_ENV: "test"
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install Newman
+      run: npm install -g newman
+    
+    - name: Seed database
+      run: npm run seed
+    
+    - name: Start server
+      run: node src/server.js &
+    
+    - name: Wait for server to be ready
+      run: |
+        for i in {1..30}; do
+          if curl -f http://localhost:3700/graphql 2>/dev/null; then
+            echo "Server is ready"
+            exit 0
+          fi
+          echo "Waiting for server... ($i/30)"
+          sleep 1
+        done
+        echo "Server did not respond in time"
+        exit 1
+    
+    - name: Run Postman tests
+      run: |
+        newman run postman/metacritic_game_api.postman_collection.json \
+          --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value":"http://localhost:3700/graphql"}]}') \
+          --reporters cli,json \
+          --reporter-json-export test-results.json \
+          --bail
+    
+    - name: Parse and display test results
+      if: always()
+      run: |
+        if [ -f test-results.json ]; then
+          echo "=== Test Summary ===" 
+          cat test-results.json | jq '.run | {tests: .stats.tests, passes: .stats.tests.total - .failures.length, failures: .failures.length}'
+        fi
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: postman-test-results
+        path: test-results.json
