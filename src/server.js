@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { ApolloServer } from "@apollo/server";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { expressMiddleware } from "@as-integrations/express5";
 import { typeDefs } from "./typeDefs/typeDefs.js";
 import { resolvers } from "./resolvers/resolvers.js";
@@ -18,6 +19,9 @@ try {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    plugins: [
+      ApolloServerPluginLandingPageLocalDefault()
+    ],
     formatError: (error) => {
       return {
         message: error.message,
