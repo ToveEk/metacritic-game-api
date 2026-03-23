@@ -10,10 +10,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DB_NAME }}
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+    
     env:
       METACRITIC_CSV_PATH: "./data/metacritic_games.csv"
       BASE_URL: "http://localhost:3700/graphql"
       NODE_ENV: "test"
+      DB_HOST: "127.0.0.1"
+      DB_PORT: "3306"
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
     
     steps:
     - uses: actions/checkout@v4
@@ -26,6 +45,10 @@ jobs:
     
     - name: Install dependencies
       run: npm ci
+    
+    - name: Create database tables
+      run: |
+        mysql -h 127.0.0.1 -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < database/schema.sql
     
     - name: Install Newman
       run: npm install -g newman
