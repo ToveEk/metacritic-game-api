@@ -25,11 +25,11 @@ jobs:
           - 3306:3306
     
     env:
-      METACRITIC_CSV_PATH: "./data/metacritic_games.csv"
-      BASE_URL: "http://localhost:3700/graphql"
+      METACRITIC_CSV_PATH: ${{ secrets.METACRITIC_CSV_PATH }}
+      BASE_URL: ${{ secrets.BASE_URL }}
       NODE_ENV: "test"
-      DB_HOST: "127.0.0.1"
-      DB_PORT: "3306"
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
@@ -37,6 +37,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Create JWT keys
+      run: |
+        echo "${{ secrets.JWT_PRIVATE_KEY }}" > keys/private.pem
+        echo "${{ secrets.JWT_PUBLIC_KEY }}" > keys/public.pem
+        mkdir -p keys
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -46,23 +52,16 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Create database tables
-      run: |
-        mysql -h 127.0.0.1 -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < database/schema.sql
-    
     - name: Install Newman
       run: npm install -g newman
     
-    - name: Seed database
-      run: npm run seed
-    
     - name: Start server
-      run: node src/server.js &
+      run: node src/server.js
     
     - name: Wait for server to be ready
       run: |
         for i in {1..30}; do
-          if curl -f http://localhost:3700/graphql 2>/dev/null; then
+          if curl -f ${{ secrets.BASE_URL }} 2>/dev/null; then
             echo "Server is ready"
             exit 0
           fi
@@ -75,7 +74,7 @@ jobs:
     - name: Run Postman tests
       run: |
         newman run postman/metacritic_game_api.postman_collection.json \
-          --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value":"http://localhost:3700/graphql"}]}') \
+          --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value": "'${{ secrets.BASE_URL }}'"}]}') \
           --reporters cli,json \
           --reporter-json-export test-results.json \
           --bail
