@@ -16,7 +16,7 @@ jobs:
       DB_PORT: 3306
       DB_NAME: railway
       DB_USER: root
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PASSWORD: testpassword
       METACRITIC_CSV_PATH: ./data/metacritic.csv
       BASE_URL: http://localhost:3000
       JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
@@ -26,10 +26,10 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: testpassword
           MYSQL_DATABASE: railway
         options: >-
-          --health-cmd="mysqladmin ping -u root -p${{ secrets.DB_PASSWORD }}"
+          --health-cmd="mysqladmin ping -u root -ptestpassword"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -78,4 +78,3 @@ jobs:
         newman run postman/metacritic_game_api.postman_collection.json \
           --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value":"http://localhost:3000"}]}') \
           --reporters cli,json
-          
