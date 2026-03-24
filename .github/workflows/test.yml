@@ -26,12 +26,10 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
           MYSQL_DATABASE: railway
-          MYSQL_USER: root
-          MYSQL_PASSWORD: root
         options: >-
-          --health-cmd="mysqladmin ping -u root -proot"
+          --health-cmd="mysqladmin ping -u root -p${{ secrets.DB_PASSWORD }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -80,3 +78,4 @@ jobs:
         newman run postman/metacritic_game_api.postman_collection.json \
           --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value":"http://localhost:3000"}]}') \
           --reporters cli,json
+          
