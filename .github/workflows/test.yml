@@ -15,9 +15,11 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          MYSQL_DATABASE: ${{ secrets.DB_NAME }}
+          MYSQL_DATABASE: railway
+          MYSQL_USER: root
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -u root -p${{ secrets.DB_PASSWORD }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -25,23 +27,25 @@ jobs:
           - 3306:3306
     
     env:
-      METACRITIC_CSV_PATH: ${{ secrets.METACRITIC_CSV_PATH }}
-      BASE_URL: ${{ secrets.BASE_URL }}
       NODE_ENV: "test"
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
-      DB_USER: ${{ secrets.DB_USER }}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: railway
+      DB_USER: root
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_NAME: ${{ secrets.DB_NAME }}
+      METACRITIC_CSV_PATH: ./data/metacritic.csv
+      BASE_URL: http://localhost:3000
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
+      JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Create JWT keys
       run: |
+        mkdir -p keys
         echo "${{ secrets.JWT_PRIVATE_KEY }}" > keys/private.pem
         echo "${{ secrets.JWT_PUBLIC_KEY }}" > keys/public.pem
-        mkdir -p keys
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -56,12 +60,12 @@ jobs:
       run: npm install -g newman
     
     - name: Start server
-      run: node src/server.js
+      run: node src/server.js &
     
     - name: Wait for server to be ready
       run: |
         for i in {1..30}; do
-          if curl -f ${{ secrets.BASE_URL }} 2>/dev/null; then
+          if curl -f http://localhost:3000 2>/dev/null; then
             echo "Server is ready"
             exit 0
           fi
@@ -74,22 +78,5 @@ jobs:
     - name: Run Postman tests
       run: |
         newman run postman/metacritic_game_api.postman_collection.json \
-          --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value": "'${{ secrets.BASE_URL }}'"}]}') \
-          --reporters cli,json \
-          --reporter-json-export test-results.json \
-          --bail
-    
-    - name: Parse and display test results
-      if: always()
-      run: |
-        if [ -f test-results.json ]; then
-          echo "=== Test Summary ===" 
-          cat test-results.json | jq '.run | {tests: .stats.tests, passes: .stats.tests.total - .failures.length, failures: .failures.length}'
-        fi
-    
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: postman-test-results
-        path: test-results.json
+          --environment <(echo '{"id":"test-env","values":[{"key":"BASE_URL","value":"http://localhost:3000"}]}') \
+          --reporters cli,json
