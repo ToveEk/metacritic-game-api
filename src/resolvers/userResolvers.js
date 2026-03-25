@@ -1,6 +1,5 @@
 import { User } from '../models/userModel.js';
 import { JsonWebToken } from '../lib/jsonWebToken.js';
-import fs from 'fs';
 import { GraphQLError } from 'graphql';
 
 export const userResolvers = {
@@ -40,7 +39,7 @@ export const userResolvers = {
                     args.lastName
                 );
 
-                const privateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH, 'utf8');
+                const privateKey = Buffer.from(process.env.JWT_PRIVATE_KEY, 'base64').toString('utf8');
                 const token = await JsonWebToken.generateJWT(
                     newUser,
                     privateKey,
@@ -73,7 +72,7 @@ export const userResolvers = {
                     throw new GraphQLError('Invalid password', { extensions: { code: 'UNAUTHENTICATED' } });
                 }
 
-                const privateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH, 'utf8');
+                const privateKey = Buffer.from(process.env.JWT_PRIVATE_KEY, 'base64').toString('utf8');
                 const token = await JsonWebToken.generateJWT(
                     user,
                     privateKey,
