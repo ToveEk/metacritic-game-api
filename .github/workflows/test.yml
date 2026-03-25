@@ -15,8 +15,5 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
 
-      - name: Wait for Railway deploy
-        run: sleep 30
-
       - name: Run Postman tests
         run: npx newman run postman/metacritic_game_api.postman_collection.json -e postman/production.postman_environment.json
