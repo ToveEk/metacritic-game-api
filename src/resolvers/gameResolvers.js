@@ -82,10 +82,12 @@ export const gameResolvers = {
     Mutation: {
         createGame: async (parent, args, context) => {
             AuthHelper.requireAuth(context);
+
+            if (!args.title || args.title.trim() === '') {
+                throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
+            }
             try {
-                if (!args.title || args.title.trim() === '') {
-                    throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
-                }
+
 
                 const [result] = await db.query(`
                     INSERT INTO games (title, release_date, metascore, userscore, description, developer, publisher)
@@ -103,12 +105,8 @@ export const gameResolvers = {
 
                 return rows[0];
             } catch (error) {
-                if (error instanceof GraphQLError) {
-                    throw error;
-                } else {
-                    console.error('Error creating game:', error);
-                    throw new GraphQLError('Failed to create game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-                }
+                console.error('Error creating game:', error);
+                throw new GraphQLError('Failed to create game', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
             }
         },
 
