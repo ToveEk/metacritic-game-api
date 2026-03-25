@@ -12,7 +12,7 @@ CREATE TABLE users (
 -- Create games table
 CREATE TABLE games (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
   release_date DATE,
   metascore INT,
   userscore DECIMAL(3, 1),

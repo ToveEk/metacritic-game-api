@@ -65,15 +65,21 @@ GraphQL
 
 ### Authentication
 
-Implemented JWT authentication with environment variables and base64 encoding for security. This approach evolved from a previous project that relied on file paths, which was a solution that proved problematic during deployment and lacked robustness.
+JWT authentication was implemented with environment variables and base64 encoding for security. This approach evolved from a previous project that relied on file paths, which was a solution that proved problematic during deployment and lacked robustness. JWT fits well for the project since it allows stateless authentication wihtout querying the database for sessions on each request.
+
+Users create an account via the createUser mutation, then login via the loginUser mutation that returns a JWT token. The token is passed in the Authorization header as Bearer <token> for CRUD operations.
 
 ### API Design
 
-Schema organized into separate resolvers and type definitions, where resolvers handle business logic and type definitions define data structures. Queries fetch data while mutations handle CRUD operations. The single-endpoint GraphQL design simplified development by eliminating route management complexity.
+Schema is organized into separate resolvers and type definitions, where resolvers handle business logic and type definitions define data structures. Each resolver and type definition is based on the tables in the MySQL database.
+
+Queries fetch data while mutations handle CRUD operations. A game query can include nested genres and platforms in the same request, avoiding multiple round-trips to the API. Games can also be filtered by titles and minimum metascore.
+
+The single-endpoint GraphQL design simplified development by eliminating route management complexity and potential over-fetching.
 
 ### Error Handling
 
-Errors are handled consistently by throwing GraphQLErrors, which provides a unified error format across the API.
+Errors are handled consistently by throwing GraphQLErrors, which provides a unified error format across the API. Error codes used are: `BAD_USER_INPUT`, `UNAUTHENTICATED`, `NOT_FOUND` and `INTERNAL_SERVER_ERROR`.
 
 Example:
 ```json
