@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import fs from "fs";
 import dotenv from "dotenv";
 import { GraphQLError } from "graphql";
 
@@ -10,7 +9,7 @@ export class AuthHelper {
         if (!token) return null;
 
         try {
-            const publicKey = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH, "utf8");
+            const publicKey = Buffer.from(process.env.JWT_PUBLIC_KEY, 'base64').toString('utf8');
             const decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
             return decoded
         } catch (error) {
