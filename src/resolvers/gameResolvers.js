@@ -83,8 +83,6 @@ export const gameResolvers = {
         createGame: async (parent, args, context) => {
             AuthHelper.requireAuth(context);
 
-            console.log('createGame called with title:', JSON.stringify(args.title));
-
             if (!args.title || args.title.trim() === '') {
                 throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
             }
