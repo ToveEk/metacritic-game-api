@@ -83,6 +83,10 @@ export const gameResolvers = {
         createGame: async (parent, args, context) => {
             AuthHelper.requireAuth(context);
             try {
+                if (!args.title || args.title.trim() === '') {
+                    throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
+                }
+
                 const [result] = await db.query(`
                     INSERT INTO games (title, release_date, metascore, userscore, description, developer, publisher)
                     VALUES (?, ?, ?, ?, ?, ?, ?)`, [
@@ -94,10 +98,6 @@ export const gameResolvers = {
                     args.developer ?? null,
                     args.publisher ?? null
                 ]);
-
-                if (!args.title || args.title.trim() === '') {
-                    throw new GraphQLError('Title is required', { extensions: { code: 'BAD_USER_INPUT' } });
-                }
 
                 const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [result.insertId]);
 
