@@ -65,7 +65,7 @@ GraphQL
 
 ### Authentication
 
-JWT authentication was implemented with environment variables and base64 encoding for security. This approach evolved from a previous project that relied on file paths, which was a solution that proved problematic during deployment and lacked robustness. JWT fits well for the project since it allows stateless authentication wihtout querying the database for sessions on each request.
+JWT authentication was implemented with environment variables and base64 encoding for security. This approach evolved from a previous project that relied on file paths, which was a solution that proved problematic during deployment and lacked robustness. JWT fits well for the project since it allows stateless authentication without querying the database for sessions on each request.
 
 Users create an account via the createUser mutation, then login via the loginUser mutation that returns a JWT token. The token is passed in the Authorization header as Bearer <token> for CRUD operations.
 
