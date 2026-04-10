@@ -17,13 +17,13 @@ export class User {
      * @param {string} lastName - The last name of the user.
      * @returns {Object} - The created user object without the password hash.
      */
-    static async createUser(username, email, password, firstName, lastName) {
+    static async createUser(username, email, password, firstName, lastName, gitHubId) {
         try {
-            const passwordHash = await bcrypt.hash(password, 10);
+            const passwordHash = gitHubId ? null : await bcrypt.hash(password, 10);
 
             const [result] = await db.query(
-                'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?, ?)',
-                [username, email, passwordHash, firstName, lastName]
+                'INSERT INTO users (username, email, password_hash, first_name, last_name, github_id) VALUES (?, ?, ?, ?, ?, ?)',
+                [username, email, passwordHash, firstName, lastName, gitHubId]
             );
 
             return {
@@ -31,7 +31,8 @@ export class User {
                 username,
                 email,
                 first_name: firstName,
-                last_name: lastName
+                last_name: lastName,
+                github_id: gitHubId
             };
             
         } catch (error) {
@@ -48,6 +49,11 @@ export class User {
      */
     static async findUserByEmail(email) {
         const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        return rows[0] || null;
+    }
+
+    static async findUserByGitHubId(gitHubId) {
+        const [rows] = await db.query('SELECT * FROM users WHERE github_id = ?', [gitHubId]);
         return rows[0] || null;
     }
 

@@ -31,5 +31,11 @@ type Mutation {
         email: String!
         password: String!
     ): AuthPayload!
+
+    loginWithGitHub(
+        email: String!
+        gitHubId: String!
+    ): AuthPayload!
+
 }
 `

@@ -62,7 +62,7 @@ export const userResolvers = {
 
         loginUser: async (_, { email, password }) => {
             try {
-                const user = await User.findUserByEmail(email);
+                const user = await User.findUserByGitHubId(email);
                 if (!user) {
                     throw new GraphQLError('User not found', { extensions: { code: 'NOT_FOUND' } });
                 }
@@ -90,6 +90,40 @@ export const userResolvers = {
                 } else {
                     console.error('Error logging in user:', error);
                     throw new GraphQLError('Failed to login user', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+                }
+            }
+        },
+
+        loginWithGitHub: async (_, { email, gitHubId }) => {
+            try {
+                let user = await User.findUserByGitHubId(gitHubId);
+                
+                if (!user) {
+                    user = await User.createUser(
+                        '', // No username for GitHub users
+                        email,
+                        '', // No password for GitHub users
+                        '', // No first name for GitHub users
+                        '',  // No last name for GitHub users
+                        gitHubId
+                    );
+                }
+                const privateKey = Buffer.from(process.env.JWT_PRIVATE_KEY, 'base64').toString('utf8');
+                const token = await JsonWebToken.generateJWT(
+                    user,
+                    privateKey,
+                    process.env.JWT_EXPIRES_IN || '7d'
+                );
+                return {
+                    user,
+                    token
+                };
+            } catch (error) {
+                if (error instanceof GraphQLError) {
+                    throw error;
+                } else {
+                    console.error('Error logging in with GitHub:', error);
+                    throw new GraphQLError('Failed to login with GitHub', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
                 }
             }
         }

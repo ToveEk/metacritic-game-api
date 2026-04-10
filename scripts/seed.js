@@ -28,6 +28,7 @@ async function parseCSV(filePath) {
  */
 function transformGame(row) {
     return {
+        // TODO: include ID in game object to match csv data
         title: row.title,
         releaseDate: row.releaseDate || null,
         metascore: row.metascore ? parseInt(row.metascore) : null,
@@ -100,6 +101,7 @@ async function seedPlatforms(platforms) {
  */
 async function seedGames(games) {
     for (const game of games) {
+        // TODO: include ID in insert query to match csv data
         await db.query(
             'INSERT INTO games (title, release_date, metascore, userscore, description, developer, publisher) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [
