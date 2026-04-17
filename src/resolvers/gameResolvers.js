@@ -77,6 +77,22 @@ export const gameResolvers = {
                 }
             }
         },
+
+        releasesPerYear: async () => {
+            try {
+            const [rows] = await db.query(`
+                SELECT YEAR(release_date) AS year, COUNT(*) AS count
+                FROM games
+                WHERE release_date IS NOT NULL
+                GROUP BY year
+                ORDER BY year ASC
+            `);
+            return rows
+            } catch (error) {
+                console.error('Error fetching releases per year data:', error);
+                throw new GraphQLError('Failed to fetch releases per year data', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+            }
+        }
     },
 
     Mutation: {

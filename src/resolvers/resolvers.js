@@ -10,8 +10,7 @@ export const resolvers = {
     Query: {
         ...gameResolvers.Query,
         ...genreResolvers.Query,
-        ...platformResolvers.Query
-
+        ...platformResolvers.Query,
     },
 
     Mutation: {
