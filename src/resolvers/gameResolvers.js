@@ -78,15 +78,26 @@ export const gameResolvers = {
             }
         },
 
-        releasesPerYear: async () => {
+        releasesPerYear: async (parent, args) => {
             try {
-            const [rows] = await db.query(`
-                SELECT YEAR(release_date) AS year, COUNT(*) AS count
+            let query = `
+                SELECT YEAR(release_date) AS year, COUNT(*) AS release_count
                 FROM games
+                JOIN game_platforms ON games.id = game_platforms.game_id
+                JOIN platforms ON game_platforms.platform_id = platforms.id
                 WHERE release_date IS NOT NULL
-                GROUP BY year
-                ORDER BY year ASC
-            `);
+            `;
+
+            const params = [];
+
+            if (args.platform) {
+                query += ' AND platforms.name = ?';
+                params.push(args.platform);
+            }
+
+            query += ' GROUP BY YEAR(release_date) ORDER BY year ASC';
+
+            const [rows] = await db.query(query, params);
             return rows
             } catch (error) {
                 console.error('Error fetching releases per year data:', error);
