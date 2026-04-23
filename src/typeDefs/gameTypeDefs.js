@@ -13,7 +13,7 @@ export const gameTypeDefs = gql`
     type Query {
         games(title: String, minMetascore: Int,limit: Int, offset: Int): GameConnection
         game(id: Int!): Game
-        releasesPerYear(platform: String): [ReleasePerYear]
+        releasesPerYear(platform: String, minYear: Int, maxYear: Int): [ReleasePerYear]
     }
     
     type DeleteResult {
