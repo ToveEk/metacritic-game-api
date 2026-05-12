@@ -80,38 +80,25 @@ export const gameResolvers = {
 
         releasesPerYear: async (parent, args) => {
             try {
-                let query = `
-                SELECT YEAR(release_date) AS year, COUNT(*) AS release_count
-                FROM games
-                JOIN game_platforms ON games.id = game_platforms.game_id
-                JOIN platforms ON game_platforms.platform_id = platforms.id
-                WHERE release_date IS NOT NULL
-                AND YEAR(release_date) BETWEEN ? AND ?
-            `;
+                const params = [args.minYear ?? 0, args.maxYear ?? 9999];
 
-                const params = [];
-
-                if (args.minYear) {
-                    params.push(args.minYear);
-                } else {
-                    params.push(0);
-                }
-
-                if (args.maxYear) {
-                    params.push(args.maxYear);
-                } else {
-                    params.push(9999);
-                }
+                let query = `SELECT YEAR(game.release_date) AS year, COUNT(DISTINCT game.id) AS release_count FROM games game`;
 
                 if (args.platform) {
-                    query += ' AND platforms.name = ?';
+                    query += `JOIN game_platforms gp ON game.id = gp.game_id JOIN platforms platform ON gp.platform_id = platform.id`;
+                }
+
+                query += `WHERE game.release_date IS NOT NULL AND YEAR(game.release_date) BETWEEN ? AND ?`;
+
+                if (args.platform) {
+                    query += ' AND platform.name = ?';
                     params.push(args.platform);
                 }
 
-                query += ' GROUP BY YEAR(release_date) ORDER BY year ASC';
+                query += ' GROUP BY YEAR(game.release_date) ORDER BY year ASC';
 
                 const [rows] = await db.query(query, params);
-                return rows
+                return rows;
             } catch (error) {
                 console.error('Error fetching releases per year data:', error);
                 throw new GraphQLError('Failed to fetch releases per year data', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
